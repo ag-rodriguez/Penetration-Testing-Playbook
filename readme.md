@@ -1,10 +1,11 @@
 # Overview
 Work in Progress
 
-# Scanning
+# Scanning and Enumeration
 These are the NMAP scans that I typically always run for engagements. The `ping_scan.sh` is a script I use when I don't have access to NMAP in certain environments. I also run these scans multiple times throughout an engagement just in case some hosts were initially missed.
 
-## Discovery Scan
+## NMAP Commands
+### Discovery Scan
 Comprehensive scan used to probe for online host. The results are saved into a file via the `-oA` flag. Can either scan a subnet:
 
 ```bash
@@ -26,7 +27,7 @@ sudo nmap -sn -iL scope.txt --min-rate=150 -oA discovery
 
 I removed the UDP and TCP port probes (-PU and -PS flags), which can slow down the scan.
 
-## Grep Output
+### Grep Output
 Take the discovered live hosts and save into a new text file:
 
 ```bash
@@ -39,12 +40,43 @@ PowerShell version if you're testing in a Windows environment:
 Get-Content discovery.gnmap | Select-String -Pattern "up" -CaseSensitive:$false | ForEach-Object { $_.Line.Split()[1] } | Where-Object { $_ -notmatch "Nmap" } | Out-File -FilePath online_hosts
 ```
 
-## Targeted Scan
+### Targeted Scan
 Comprehensive targeted scan:
 
 ```Bash
 sudo nmap --version-intensity=0 --min-rate=150 --max-retries=2 --initial-rtt-timeout=50ms --max-rtt-timeout=200ms --max-scan-delay=5 -Pn -sS -sV -sU -p T:1-65535,U:53,67-69,111,123,135,137-139,161-162,445,500,514,520,631,996-999,1434,1701,1900,3283,4500,5353,49152-49154 -iL online_hosts -oA targeted
 ```
+
+# OSINT/Reconnaisance 
+
+## BBOT
+BBOT is one of my favorite tools for external network pentests. It's multipurpose and pretty comprehensive. When properly configured, you can uncover a wealth of information. Just be mindful that since the target is a domain, the tool may actively interact with hosts that are out of scope.
+
+What you can do is eithe specify targets directly on the command line or load from a file (scope):
+
+```bash
+bbot -t targets.txt
+```
+
+This tool is a fast way to obtain subdomains. Which can be done either actively (I like to GoWitness module) or passively:
+
+```bash
+# Active
+bbot -t tesla.com -f subdomain-enum  -m gowitness
+
+# Passive
+bbot -t tesla.com -f subdomain-enum -rf passive
+```
+
+I may some run something like:
+
+```bash
+bbot -t {scope.txt} -f subdomain-enum email-enum subdomain-hijack web-screenshots -m httpx badsecrets secretsdb affiliates -om json | jq | csv | human | txt
+```
+
+For better results (and best practice), tailor your flags and modules to your target.
+
+
 
 # Service Enumeration
 

@@ -417,6 +417,18 @@ Get-ADDefaultDomainPasswordPolicy
 Search-ADAccount -LockedOut
 ```
 
+## Without ADModule
+### Inactive Computer Accounts in the last 180 days
+```powershell
+$timeSpan = New-TimeSpan -Days 180
+$time = (Get-Date) - $timeSpan
+$inactiveComputers = Get-WmiObject -Class Win32_ComputerSystem -Namespace "root\directory\ldap" | 
+    Where-Object { $_.LastLogonTimestamp -lt $time.ToFileTime() } |
+    Select-Object Name, @{Name="LastLogon"; Expression={[DateTime]::FromFileTime($_.LastLogonTimestamp)}}
+
+$inactiveComputers | Format-Table -AutoSize
+```
+
 ## Using PowerView
 
 ```PowerShell

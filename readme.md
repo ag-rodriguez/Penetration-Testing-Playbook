@@ -2,42 +2,30 @@
 Work in Progress
 
 # Scanning and Enumeration
-These are the NMAP scans that I typically always run for engagements. The `ping_scan.sh` is a script I use when I don't have access to NMAP in certain environments. I also run these scans multiple times throughout an engagement just in case some hosts were initially missed.
+These are the NMAP scans that I typically always run for engagements. I also like to run these scans multiple times throughout an engagement just in case some hosts/service was not picked up by initial scans. The output from these scans are also saved into multiple files using the `-oA` flag.
 
 ## NMAP Commands
 ### Discovery Scan
-Comprehensive scan used to probe for online host. The results are saved into a file via the `-oA` flag. Can either scan a subnet:
+Comprehensive scan used to probe for online host. Can either scan a subnet:
 
 ```bash
 sudo nmap -sn -PE -sP 10.11.1.5/24 -PU53,67-69,111,123,135,137-139,161-162,445,500,514,520,631,996-999,1434,1701,1900,3283,4500,5353,49152-49154 -PS3,7,9,13,17,19,21-23,25-26,37,53,79-82,88,100,106,110-111,113,119,135,139,143-144,179,199,254-255,280,311,389,427,443-445,464-465,497,513-515,543-544,548,554,587,593,625,631,636,646,787,808,873,902,990,993,995,1000,1022,1024-1033,1035-1041,1044,1048-1050,1053-1054,1056,1058-1059,1064-1066,1069,1071,1074,1080,1110,1234,1433,1494,1521,1720,1723,1755,1761,1801,1900,1935,1998,2000-2003,2005,2049,2103,2105,2107,2121,2161,2301,2383,2401,2601,2717,2869,2967,3000-3001,3128,3268,3306,3389,3689-3690,3703,3986,4000-4001,4045,4899,5000-5001,5003,5009,5050-5051,5060,5101,5120,5190,5357,5432,5555,5631,5666,5800,5900-5901,6000-6002,6004,6112,6646,6666,7000,7070,7937-7938,8000,8002,8008-8010,8031,8080-8081,8443,8888,9000-9001,9090,9100,9102,9999-10001,10010,32768,32771,49152-49157 -oA discovery
 ```
 
-Or save IPs into a file and feed it to NMAP using the `-iL` flag:
+Or save a list of IPs into a file and feed it to NMAP using the `-iL` flag:
 
 
 ```bash
 sudo nmap -sn -PE -sP -iL scope.txt -PU53,67-69,111,123,135,137-139,161-162,445,500,514,520,631,996-999,1434,1701,1900,3283,4500,5353,49152-49154 -PS3,7,9,13,17,19,21-23,25-26,37,53,79-82,88,100,106,110-111,113,119,135,139,143-144,179,199,254-255,280,311,389,427,443-445,464-465,497,513-515,543-544,548,554,587,593,625,631,636,646,787,808,873,902,990,993,995,1000,1022,1024-1033,1035-1041,1044,1048-1050,1053-1054,1056,1058-1059,1064-1066,1069,1071,1074,1080,1110,1234,1433,1494,1521,1720,1723,1755,1761,1801,1900,1935,1998,2000-2003,2005,2049,2103,2105,2107,2121,2161,2301,2383,2401,2601,2717,2869,2967,3000-3001,3128,3268,3306,3389,3689-3690,3703,3986,4000-4001,4045,4899,5000-5001,5003,5009,5050-5051,5060,5101,5120,5190,5357,5432,5555,5631,5666,5800,5900-5901,6000-6002,6004,6112,6646,6666,7000,7070,7937-7938,8000,8002,8008-8010,8031,8080-8081,8443,8888,9000-9001,9090,9100,9102,9999-10001,10010,32768,32771,49152-49157 -oA discovery
 ```
 
-Potential downsides depend on the environment. With all of these flags, it could cause unnecessary traffic, and scanning could take longer (especially when the scope is big). What I run instead when this happens is:
-
-```bash
-sudo nmap -sn -iL scope.txt --min-rate=150 -oA discovery
-```
-
-I removed the UDP and TCP port probes (-PU and -PS flags), which can slow down the scan.
+Potential downsides depend on the environment. With all of these flags, it could cause unnecessary traffic, and scanning could take longer (especially when the scope is big). 
 
 ### Grep Output
-Take the discovered live hosts and save into a new text file:
+Use the saved discovery scan file and grep to pipe only the IPs into another file:
 
 ```bash
 cat discovery.gnmap | grep -i "up" | cut -d " " -f2 | grep -vi nmap > online_hosts
-```
-
-PowerShell version if you're testing in a Windows environment:
-
-```PowerShell
-Get-Content discovery.gnmap | Select-String -Pattern "up" -CaseSensitive:$false | ForEach-Object { $_.Line.Split()[1] } | Where-Object { $_ -notmatch "Nmap" } | Out-File -FilePath online_hosts
 ```
 
 ### Targeted Scan
@@ -50,9 +38,9 @@ sudo nmap --version-intensity=0 --min-rate=150 --max-retries=2 --initial-rtt-tim
 # OSINT/Reconnaisance 
 
 ## BBOT
-BBOT is one of my favorite tools for external network pentests. It's multipurpose and pretty comprehensive. When properly configured, you can uncover a wealth of information. Just be mindful that since the target is a domain, the tool may actively interact with hosts that are out of scope.
+BBOT is one of my favorite tools for external network pentests. It's multipurpose and pretty comprehensive. Just be mindful that since the target is a domain, the tool may actively interact with hosts that are out of scope or perform disruptive things.
 
-What you can do is eithe specify targets directly on the command line or load from a file (scope):
+What you can do is either specify targets directly on the command line or load from a file (scope):
 
 ```bash
 bbot -t targets.txt
